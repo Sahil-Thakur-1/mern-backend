@@ -1,4 +1,3 @@
-import { verifyUser } from "../../../CLIENT/src/features/auth/authSlice.js";
 import { Address } from "../model/address.model.js";
 import { User } from "../model/user.model.js";
 
