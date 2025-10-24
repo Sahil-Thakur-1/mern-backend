@@ -34,35 +34,32 @@ class AuthController {
     async login(req, res) {
         try {
             const { loginCredential, password } = req.body;
-            const isEmail = loginCredential.endsWith('@gmail.com');
-            let isExisting;
+            let isExisting = loginCredential.includes("@")
+                ? await User.findOne({ email: loginCredential })
+                : await User.findOne({ userName: loginCredential });
 
-            if (isEmail) {
-                isExisting = await User.findOne({ email: loginCredential });
-                if (!isExisting) {
-                    return res.status(400).json({ success: false, message: "User is not registered" });
-                }
-            } else {
-                isExisting = await User.findOne({ userName: loginCredential });
-                if (!isExisting) {
-                    return res.status(400).json({ success: false, message: "User is not registered" });
-                }
-            }
+            if (!isExisting) return res.status(400).json({ success: false, message: "User is not registered" });
+
             const passwordCheck = await bcrypt.compare(password, isExisting.password);
-            if (!passwordCheck) {
-                return res.status(401).json({ success: false, message: "wrong Password" });
-            }
+            if (!passwordCheck) return res.status(401).json({ success: false, message: "Wrong Password" });
 
             const { refreshToken, accessToken } = await this.generateToken(isExisting);
 
-            await User.findByIdAndUpdate(isExisting._id, { refreshToken }, { new: true });
+            await User.findByIdAndUpdate(isExisting._id, { refreshToken });
 
-            res.clearCookie('refreshToken');
+            res.clearCookie('refreshToken', {
+                httpOnly: true,
+                secure: true,
+                sameSite: "none",
+                path: "/"
+            });
+
             return res.status(200).cookie('refreshToken', refreshToken, {
                 httpOnly: true,
                 secure: true,
                 sameSite: "none",
-                maxAge: 7 * 24 * 60 * 60 * 1000
+                maxAge: 7 * 24 * 60 * 60 * 1000,
+                path: "/"
             }).json({
                 success: true,
                 message: "login successful",
@@ -71,12 +68,12 @@ class AuthController {
                     role: isExisting.role,
                     userName: isExisting.userName
                 },
-                accessToken: accessToken
+                accessToken
             });
-        }
-        catch (error) {
+
+        } catch (error) {
             console.log(error);
-            return res.status(500).json({ success: false, message: error });
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -131,23 +128,31 @@ class AuthController {
 
             console.log(user.role);
 
-            res.clearCookie('refreshToken')
-            return res.status(200).cookie('refreshToken', newRefreshToken,
-                {
-                    httpOnly: true,
-                    secure: true,
-                    sameSite: "none",
-                    maxAge: 7 * 24 * 60 * 60 * 1000
-                }).json({
-                    success: true,
-                    message: "user verified",
-                    user: {
-                        userName: user.userName,
-                        email: user.email,
-                        role: user.role
-                    },
-                    accessToken: accessToken
-                });
+            res.clearCookie('refreshToken', {
+                httpOnly: true,
+                secure: true,
+                sameSite: "none",
+                path: "/"
+            });
+
+            res.cookie('refreshToken', newRefreshToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: "none",
+                maxAge: 7 * 24 * 60 * 60 * 1000,
+                path: "/"
+            });
+
+            return res.status(200).json({
+                success: true,
+                message: "user verified",
+                user: {
+                    userName: user.userName,
+                    email: user.email,
+                    role: user.role
+                },
+                accessToken: accessToken
+            });
         }
         catch (e) {
             if (e.name === "TokenExpiredError") {
