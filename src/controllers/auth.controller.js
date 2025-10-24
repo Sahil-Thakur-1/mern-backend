@@ -60,8 +60,8 @@ class AuthController {
             res.clearCookie('refreshToken');
             return res.status(200).cookie('refreshToken', refreshToken, {
                 httpOnly: true,
-                secure: false,
-                sameSite: "strict",
+                secure: true,
+                sameSite: "none",
                 maxAge: 7 * 24 * 60 * 60 * 1000
             }).json({
                 success: true,
@@ -93,8 +93,8 @@ class AuthController {
             return res.status(200)
                 .clearCookie('refreshToken', {
                     httpOnly: true,
-                    secure: false,
-                    sameSite: "strict",
+                    secure: true,
+                    sameSite: "none",
                 })
                 .json({
                     success: true,
@@ -135,8 +135,8 @@ class AuthController {
             return res.status(200).cookie('refreshToken', newRefreshToken,
                 {
                     httpOnly: true,
-                    secure: false,
-                    sameSite: "strict",
+                    secure: true,
+                    sameSite: "none",
                     maxAge: 7 * 24 * 60 * 60 * 1000
                 }).json({
                     success: true,

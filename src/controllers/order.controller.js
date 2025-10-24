@@ -55,8 +55,8 @@ class OrderController {
                             "brand_name": "UNICLUB",
                             "landing_page": "NO_PREFERENCE",
                             "user_action": "PAY_NOW",
-                            "return_url": "http://localhost:5173/payment/success",
-                            "cancel_url": "http://localhost:5173/payment/cancel"
+                            "return_url": `${process.env.CLIENT_URL}/payment/success`,
+                            "cancel_url": `${process.env.CLIENT_URL}/payment/cancel`
                         }
                     },
                     {
@@ -191,6 +191,26 @@ class OrderController {
             }
             const orders = await Order.find();
             return res.status(200).json({ success: true, orders: orders, message: "order fetched succesfully" })
+        }
+        catch (error) {
+            return res.status(500).json({ success: false, message: error.message });
+        }
+    }
+
+    async updateOrderStatus(req, res) {
+        try {
+            const user = req.user;
+            if (user.roles != 'admin') {
+                return res.status(401).json({ success: false, message: "Unauthorized" });
+            }
+            const { orderId, status } = req.body;
+            const order = await Order.findById(orderId);
+            if (!order) {
+                return res.status(404).json({ success: false, message: "order not found" });
+            }
+            order.orderStatus = status;
+            await order.save();
+            return res.status(200).json({ success: true, message: "order status undated successfully" });
         }
         catch (error) {
             return res.status(500).json({ success: false, message: error.message });

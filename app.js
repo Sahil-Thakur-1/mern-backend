@@ -6,8 +6,8 @@ import routes from "./src/routes/index.route.js";
 const app = express();
 
 app.use(cors({
-    origin: "https://mern-frontend-two-phi.vercel.app",
-    methods: ['GET', 'POST', 'DELETE', 'PUT'],
+    origin: ["https://mern-frontend-two-phi.vercel.app", "http://localhost:5173"],
+    methods: ['GET', 'POST', 'DELETE', 'PUT', 'PATCH'],
     allowedHeaders: [
         "Content-Type",
         "Authorization",
